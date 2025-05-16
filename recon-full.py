@@ -1,18 +1,28 @@
 class AcunetixAPI:
     """Class to interact with Acunetix API."""
     
-    def __init__(self, api_url, api_key):
+    def __init__(self, api_url, api_key, verify_ssl=False):
         """Initialize with Acunetix API URL and API key."""
         self.api_url = api_url.rstrip('/')
         self.headers = {
             'X-Auth': api_key,
             'Content-Type': 'application/json'
         }
+        self.verify_ssl = verify_ssl
+        
+        # Disable SSL warnings if verification is disabled
+        if not verify_ssl:
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     
     def test_connection(self):
         """Test API connection."""
         try:
-            response = requests.get(f"{self.api_url}/me", headers=self.headers)
+            response = requests.get(
+                f"{self.api_url}/me", 
+                headers=self.headers, 
+                verify=self.verify_ssl
+            )
             if response.status_code == 200:
                 logger.info("✅ Successfully connected to Acunetix API")
                 return True
@@ -34,7 +44,8 @@ class AcunetixAPI:
             response = requests.post(
                 f"{self.api_url}/targets", 
                 headers=self.headers, 
-                data=json.dumps(payload)
+                data=json.dumps(payload),
+                verify=self.verify_ssl
             )
             
             if response.status_code == 201:
@@ -92,7 +103,8 @@ class AcunetixAPI:
             response = requests.post(
                 f"{self.api_url}/scans", 
                 headers=self.headers, 
-                data=json.dumps(payload)
+                data=json.dumps(payload),
+                verify=self.verify_ssl
             )
             
             if response.status_code == 201:
@@ -110,7 +122,11 @@ class AcunetixAPI:
     def _get_scan_profile_id(self, profile_name):
         """Get the scan profile ID by name."""
         try:
-            response = requests.get(f"{self.api_url}/scanning_profiles", headers=self.headers)
+            response = requests.get(
+                f"{self.api_url}/scanning_profiles", 
+                headers=self.headers,
+                verify=self.verify_ssl
+            )
             
             if response.status_code == 200:
                 profiles = response.json().get('scanning_profiles', [])
@@ -131,7 +147,11 @@ class AcunetixAPI:
     def get_scan_status(self, scan_id):
         """Get the status of a scan."""
         try:
-            response = requests.get(f"{self.api_url}/scans/{scan_id}", headers=self.headers)
+            response = requests.get(
+                f"{self.api_url}/scans/{scan_id}", 
+                headers=self.headers,
+                verify=self.verify_ssl
+            )
             
             if response.status_code == 200:
                 scan_data = response.json()
@@ -152,6 +172,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import requests
+import urllib3
 
 # Configure logging
 logging.basicConfig(
@@ -182,9 +203,11 @@ class ReconTool:
         
         # Initialize Acunetix API if config is provided
         if self.acunetix_config:
+            verify_ssl = self.acunetix_config.get('verify_ssl', False)
             self.acunetix_api = AcunetixAPI(
                 self.acunetix_config.get('api_url', ''),
-                self.acunetix_config.get('api_key', '')
+                self.acunetix_config.get('api_key', ''),
+                verify_ssl
             )
         
         # Create output directory if it doesn't exist
@@ -448,6 +471,8 @@ def main():
                         help="Acunetix API Key")
     parser.add_argument("--acunetix-profile", default="Full Scan",
                         help="Acunetix scan profile (default: Full Scan)")
+    parser.add_argument("--verify-ssl", action="store_true",
+                        help="Verify SSL certificates when connecting to Acunetix (default: False)")
     
     args = parser.parse_args()
     
@@ -457,7 +482,8 @@ def main():
         acunetix_config = {
             'api_url': args.acunetix_url,
             'api_key': args.acunetix_key,
-            'scan_profile': args.acunetix_profile
+            'scan_profile': args.acunetix_profile,
+            'verify_ssl': args.verify_ssl
         }
     
     recon = ReconTool(domain=args.domain, output_dir=args.output_dir, 
