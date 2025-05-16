@@ -17,8 +17,10 @@ A comprehensive security reconnaissance tool that automates subdomain enumeratio
   - [httpx](https://github.com/projectdiscovery/httpx)
   - [nuclei](https://github.com/projectdiscovery/nuclei)
   - [katana](https://github.com/projectdiscovery/katana)
+  - OR: Alls recon tool [Tools][https://docs.projectdiscovery.io/tools]
 - Optional:
   - Acunetix Web Vulnerability Scanner (for automatic scanning)
+  - OR: [Github][https://github.com/securi3ytalent/acunetix-13-kali-linux]
 
 ## Installation
 
@@ -26,9 +28,6 @@ A comprehensive security reconnaissance tool that automates subdomain enumeratio
 # Clone the repository
 git clone https://github.com/yourusername/recon-tool.git
 cd recon-tool
-
-# Install Python dependencies
-pip install requests
 
 # Make the script executable
 chmod +x recon_tool.py
